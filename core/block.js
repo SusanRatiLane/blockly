@@ -952,10 +952,10 @@ Blockly.Block.prototype.appendStatementInput = function(name) {
  */
 
 Blockly.Block.prototype.appendIndentedValueInput = function(name) {
-    return this.appendInput_(Blockly.INDENTED_VALUE, name);
+  return this.appendInput_(Blockly.INDENTED_INPUT_VALUE, name);
 };
-
 /**
+ *
  * Shortcut for appending a dummy input row.
  * @param {string=} opt_name Language-neutral identifier which may used to find
  *     this input again.  Should be unique to this block.
@@ -1151,9 +1151,67 @@ Blockly.Block.prototype.interpolate_ = function(message, args, lastDummyAlign) {
 };
 
 /**
- * Add a value input, statement input or local variable to this block.
+ * Helper function to construct a FieldImage from a JSON arg object,
+ * dereferencing any string table references.
+ * @param {!Object} options A JSON object with options (src, width, height, and alt).
+ * @returns {!Blockly.FieldImage} The new image.
+ * @private
+ */
+Blockly.Block.newFieldImageFromJson_ = function(options) {
+  var src = Blockly.utils.replaceMessageReferences(options['src']);
+  var width = Number(Blockly.utils.replaceMessageReferences(options['width']));
+  var height =
+    Number(Blockly.utils.replaceMessageReferences(options['height']));
+  var alt = Blockly.utils.replaceMessageReferences(options['alt']);
+  return new Blockly.FieldImage(src, width, height, alt);
+};
+
+/**
+ * Helper function to construct a FieldLabel from a JSON arg object,
+ * dereferencing any string table references.
+ * @param {!Object} options A JSON object with options (text, and class).
+ * @returns {!Blockly.FieldLabel} The new label.
+ * @private
+ */
+Blockly.Block.newFieldLabelFromJson_ = function(options) {
+  var text = Blockly.utils.replaceMessageReferences(options['text']);
+  return new Blockly.FieldLabel(text, options['class']);
+};
+
+/**
+ * Helper function to construct a FieldTextInput from a JSON arg object,
+ * dereferencing any string table references.
+ * @param {!Object} options A JSON object with options (text, class, and
+ *                          spellcheck).
+ * @returns {!Blockly.FieldTextInput} The new text input.
+ * @private
+ */
+Blockly.Block.newFieldTextInputFromJson_ = function(options) {
+  var text = Blockly.utils.replaceMessageReferences(options['text']);
+  var field = new Blockly.FieldTextInput(text, options['class']);
+  if (typeof options['spellcheck'] == 'boolean') {
+    field.setSpellcheck(options['spellcheck']);
+  }
+  return field;
+};
+
+/**
+ * Helper function to construct a FieldVariable from a JSON arg object,
+ * dereferencing any string table references.
+ * @param {!Object} options A JSON object with options (variable).
+ * @returns {!Blockly.FieldVariable} The variable field.
+ * @private
+ */
+Blockly.Block.newFieldVariableFromJson_ = function(options) {
+  var varname = Blockly.utils.replaceMessageReferences(options['variable']);
+  var variableTypes = options['variableTypes'];
+  return new Blockly.FieldVariable(varname, null, variableTypes);
+};
+
+
+/**
  * @param {number} type Either Blockly.INPUT_VALUE, Blockly.NEXT_STATEMENT, Blockly.DUMMY_INPUT,
- *     or subtypes Blockly.INDENTED_VALUE.
+ *     or subtypes Blockly.INDENTED_INPUT_VALUE.
  * @param {string} name Language-neutral identifier which may used to find this
  *     input again.  Should be unique to this block.
  * @return {!Blockly.Input} The input object created.
@@ -1161,7 +1219,8 @@ Blockly.Block.prototype.interpolate_ = function(message, args, lastDummyAlign) {
  */
 Blockly.Block.prototype.appendInput_ = function(type, name) {
   var connection = null;
-  if (type == Blockly.INPUT_VALUE || type == Blockly.NEXT_STATEMENT || type == Blockly.INDENTED_VALUE) {
+  if (type == Blockly.INPUT_VALUE || type == Blockly.NEXT_STATEMENT ||
+    type == Blockly.INDENTED_INPUT_VALUE) {
     connection = this.makeConnection_(type);
   }
   var input = new Blockly.Input(type, name, this, connection);
